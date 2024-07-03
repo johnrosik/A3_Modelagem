@@ -5,26 +5,33 @@ class CustomerController:
     def __init__(self):
         self.customers = []
             
-    def add(self, id, name, email):
-        self.customers.append(Customer(id, name, email))
-            
-    def list(self):
+    def add_customer(self, id, name, phone, email, cpf):
+        customer = {"id": id, "name": name, "phone": phone, "email": email, "cpf": cpf}
+        self.customers.append(customer)
+
+    def get_all_customers(self):
         return self.customers
-        
-    def search(self, id):
-        return next((customer for customer in self.customers if customer.id == id), None)
-        
-    def delete(self, id):
-        customer = self.search(id)
-        if customer:
-            self.customers.remove(customer)
-            return True
-        return False
-        
-    def update(self, id, name, email):
-        customer = self.search(id)
-        if customer:
-            customer.name = name
-            customer.email = email
-            return True
+
+    def find_customer_by(self, name, id, cpf):
+        # sourcery skip: merge-duplicate-blocks, remove-redundant-if, use-next
+        for customer in self.customers:
+            if customer["name"] == name:
+                return customer
+            elif customer["id"] == id:
+                return customer
+            elif customer["CPF"] == cpf:
+                return customer
+        return None
+
+    def delete_customer_by(self, name, id, cpf):
+        self.customers = [customer for customer in self.customers if customer["name"] != name and customer["id"] != id and customer["cpf"] != cpf]
+
+    def update_customer(self, id, new_name, new_phone, new_email, new_cpf):
+        for customer in self.customers:
+            if customer["id"] == id:
+                customer["name"] = new_name
+                customer["phone"] = new_phone
+                customer["email"] = new_email
+                customer["cpf"] = new_cpf
+                return True
         return False

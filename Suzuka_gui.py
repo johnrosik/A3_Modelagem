@@ -1,10 +1,10 @@
+import json
 import tkinter as tk
-from tkinter import messagebox, simpledialog
+from tkinter import messagebox
 
 from ProductController import ProductController
 from CustomerController import CustomerController
 from SaleController import SaleController
-from Menu import Menu
 
 class ERPSuzuka:
     def __init__(self, root):
@@ -60,72 +60,58 @@ class ERPSuzuka:
         btn_back.grid(row=1, column=0, columnspan=len(buttons), pady=10)
         
     def collect_product_data(self):
-        # Criar uma nova janela para coletar dados do produto
         self.product_window = tk.Toplevel(self.root)
         self.product_window.title("Adicionar Produto")
-
-        # Labels e Entradas para os dados do produto
-        tk.Label(self.product_window, text="ID do Produto:").grid(row=0, column=0, padx=10, pady=5)
-        self.id_entry = tk.Entry(self.product_window)
-        self.id_entry.grid(row=0, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Nome do Produto:").grid(row=1, column=0, padx=10, pady=5)
-        self.name_entry = tk.Entry(self.product_window)
-        self.name_entry.grid(row=1, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Preço do Produto:").grid(row=2, column=0, padx=10, pady=5)
-        self.price_entry = tk.Entry(self.product_window)
-        self.price_entry.grid(row=2, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Número da Peça:").grid(row=3, column=0, padx=10, pady=5)
-        self.part_number_entry = tk.Entry(self.product_window)
-        self.part_number_entry.grid(row=3, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Estoque do Produto:").grid(row=4, column=0, padx=10, pady=5)
-        self.stock_entry = tk.Entry(self.product_window)
-        self.stock_entry.grid(row=4, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Categoria do Produto:").grid(row=5, column=0, padx=10, pady=5)
-        self.category_entry = tk.Entry(self.product_window)
-        self.category_entry.grid(row=5, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Preço de Fábrica:").grid(row=6, column=0, padx=10, pady=5)
-        self.factory_price_entry = tk.Entry(self.product_window)
-        self.factory_price_entry.grid(row=6, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Fabricante:").grid(row=8, column=0, padx=10, pady=5)
-        self.manufacturer_entry = tk.Entry(self.product_window)
-        self.manufacturer_entry.grid(row=8, column=1, padx=10, pady=5)
-
-        tk.Label(self.product_window, text="Descrição:").grid(row=9, column=0, padx=10, pady=5)
-        self.description_entry = tk.Entry(self.product_window)
-        self.description_entry.grid(row=9, column=1, padx=10, pady=5)
-
-        # Botão para salvar os dados do produto
+    
+        campos = [
+            ("ID do Produto:", "id_entry"),
+            ("Nome do Produto:", "name_entry"),
+            ("Preço do Produto:", "price_entry"),
+            ("Número da Peça:", "part_number_entry"),
+            ("Estoque do Produto:", "stock_entry"),
+            ("Categoria do Produto:", "category_entry"),
+            ("Preço de Fábrica:", "factory_price_entry"),
+            ("Fabricante:", "manufacturer_entry"),
+            ("Descrição:", "description_entry")
+        ]
+    
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.product_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.product_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)  # Define o atributo dinamicamente
+    
         btn_save = tk.Button(self.product_window, text="Salvar", command=self.save_product)
-        btn_save.grid(row=10, column=0, columnspan=2, pady=10)
+        btn_save.grid(row=len(campos), column=0, columnspan=2, pady=10)
         
     def save_product(self):
-        # Coletar dados dos campos de entrada
-        id = self.id_entry.get()
-        name = self.name_entry.get()
-        price = self.price_entry.get()
-        part_number = self.part_number_entry.get()
-        stock = self.stock_entry.get()
-        category = self.category_entry.get()
-        factory_price = self.factory_price_entry.get()
-        manufacturer = self.manufacturer_entry.get()
-        description = self.description_entry.get()
+        campos = [
+            ("id_entry", "id"),
+            ("name_entry", "name"),
+            ("price_entry", "price"),
+            ("part_number_entry", "part_number"),
+            ("stock_entry", "stock"),
+            ("category_entry", "category"),
+            ("factory_price_entry", "factory_price"),
+            ("manufacturer_entry", "manufacturer"),
+            ("description_entry", "description")
+        ]
+    
+    
+        produto = {}
+        for entry_attr, key in campos:
+            value = getattr(self, entry_attr).get()
+            if not value:
+                # Handle empty value
+                value = None
+            produto[key] = value
+    
+    
+        with open('produto.json', 'w') as json_file:
+            json.dump(produto, json_file, indent=4)
+    
+        print("Objeto salvo com sucesso em produto.json")
 
-        # Verificar se todos os campos foram preenchidos
-        if id and name and price and part_number and stock and category and factory_price and manufacturer and description:
-            # Chamar o método add do ProductController com os dados coletados
-            self.productController.add_product(id, name, price, part_number, stock, category, factory_price, manufacturer, description)
-            messagebox.showinfo("Produto Adicionado", f"Produto '{name}' cadastrado com sucesso")
-            self.product_window.destroy()  # Fechar a janela após salvar
-            self.productMenu()  # Atualizar o menu de produtos
-        else:
-            messagebox.showwarning("Dados Incompletos", "Todos os campos são obrigatórios!")
             
     def list_products(self):
         products = self.productController.list_products()
@@ -162,52 +148,47 @@ class ERPSuzuka:
         btn_back.grid(row=1, column=0, columnspan=len(buttons), pady=10)
         
     def collect_customer_data(self):
-        # Criar uma nova janela para coletar dados do cliente
-        self.customer_window = tk.Toplevel(self.root)
-        self.customer_window.title("Adicionar Cliente")
-
-        # Labels e Entradas para os dados do cliente
-        tk.Label(self.customer_window, text="ID do Cliente:").grid(row=0, column=0, padx=10, pady=5)
-        self.id_entry = tk.Entry(self.customer_window)
-        self.id_entry.grid(row=0, column=1, padx=10, pady=5)
-
-        tk.Label(self.customer_window, text="Nome do Cliente:").grid(row=1, column=0, padx=10, pady=5)
-        self.name_entry = tk.Entry(self.customer_window)
-        self.name_entry.grid(row=1, column=1, padx=10, pady=5)
-
-        tk.Label(self.customer_window, text="Telefone do Cliente:").grid(row=2, column=0, padx=10, pady=5)
-        self.phone_entry = tk.Entry(self.customer_window)
-        self.phone_entry.grid(row=2, column=1, padx=10, pady=5)
-
-        tk.Label(self.customer_window, text="Email do Cliente:").grid(row=3, column=0, padx=10, pady=5)
-        self.email_entry = tk.Entry(self.customer_window)
-        self.email_entry.grid(row=3, column=1, padx=10, pady=5)
-
-        tk.Label(self.customer_window, text="CPF do Cliente:").grid(row=4, column=0, padx=10, pady=5)
-        self.cpf_entry = tk.Entry(self.customer_window)
-        self.cpf_entry.grid(row=4, column=1, padx=10, pady=5)
-
-        # Botão para salvar os dados do cliente
-        btn_save = tk.Button(self.customer_window, text="Salvar", command=self.save_customer)
-        btn_save.grid(row=5, column=0, columnspan=2, pady=10)
+        self.customers_window = tk.Toplevel(self.root)
+        self.customers_window.title("Adicionar Cliente")
+        
+        campos = [
+            ("ID do Cliente:", "id_entry"),
+            ("Nome do Cliente:", "name_entry"),
+            ("Telefone do Cliente:", "phone_entry"),
+            ("Email do Cliente:", "email_entry"),
+            ("CPF do Cliente:", "cpf_entry")
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.customers_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.customers_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)
+            
+        btn_save = tk.Button(self.customers_window, text="Salvar", command=self.save_customer)
+        btn_save.grid(row=len(campos), column=0, columnspan=2, pady=10)
 
     def save_customer(self):
-        # Coletar dados dos campos de entrada
-        id = self.id_entry.get()
-        name = self.name_entry.get()
-        phone = self.phone_entry.get()
-        email = self.email_entry.get()
-        cpf = self.cpf_entry.get()
-
-        # Verificar se todos os campos foram preenchidos
-        if id and name and phone and email and cpf:
-            # Chamar o método add_customer do CustomerController com os dados coletados
-            self.customerController.add_customer(id, name, phone, email, cpf)
-            messagebox.showinfo("Cliente Adicionado", f"Cliente '{name}' cadastrado com sucesso")
-            self.customer_window.destroy()  # Fechar a janela após salvar
-            self.customerMenu()  # Atualizar o menu de clientes
-        else:
-            messagebox.showwarning("Dados Incompletos", "Todos os campos são obrigatórios!")
+        campos = [
+            ("id_entry", "id"),
+            ("name_entry", "name"),
+            ("phone_entry", "phone"),
+            ("email_entry", "email"),
+            ("cpf_entry", "cpf")
+        ]
+        
+        customer = {}
+        for entry_attr, key in campos:
+            value = getattr(self, entry_attr).get()
+            if not value:
+                # Handle empty value
+                value = None
+            customer[key] = value
+            
+        with open('customer.json', 'w') as json_file:
+            json.dump(customer, json_file, indent=4)
+            
+        print("Objeto salvo com sucesso em customer.json")
 
     #def saleMenu(self):
         
@@ -288,8 +269,8 @@ class ERPSuzuka:
 
     def saleMenu(self):
         id = "001"
-        customer
-        product
+        customer = "John Doe"  # Replace "John Doe" with the actual customer name
+        product = "Product Name"  # Replace "Product Name" with the actual product name
         quantity = 1
         date = "01/01/2021"
         self.saleController.add(id, customer, product, quantity, date)
@@ -299,7 +280,7 @@ class ERPSuzuka:
 
 def main():
     root = tk.Tk()
-    app = ERPSuzuka(root)
+    ERPSuzuka(root)
     root.mainloop()
 
 if __name__ == "__main__":

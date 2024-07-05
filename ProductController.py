@@ -1,5 +1,5 @@
 from Product import Product
-
+import json
 
 class ProductController:
     def __init__(self):
@@ -10,7 +10,14 @@ class ProductController:
         self.products.append(Product(id, name, price , partNumber, stock, category, factoryPrice,  manufacturer, description))
             
     def list_products(self):
-        return self.products
+        try:
+            with open(self.file_path, 'r') as file:
+                product = json.load(file)
+                return self.products
+        except FileNotFoundError:
+            return []
+        except json.JSONDecodeError:
+            return []
         
     def search_products_by(self, id, partNumber, name, category, manufacturer, description,):
         return next((product for product in self.products if product['id'] == id and product['partNumber'] == partNumber and product['name'] == name and product['category'] == category and product['manufacturer'] == manufacturer and product['description'] == description), None)

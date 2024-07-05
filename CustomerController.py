@@ -1,5 +1,5 @@
 from Customer import Customer
-
+import json
 
 class CustomerController:
     def __init__(self):
@@ -10,7 +10,14 @@ class CustomerController:
         self.customers.append(customer)
 
     def get_all_customers(self):
-        return self.customers
+        try:
+            with open(self.file_path, 'r') as file:
+                customers = json.load(file)
+                return customers
+        except FileNotFoundError:
+            return []
+        except json.JSONDecodeError:
+            return []
 
     def find_customer_by(self, name, id, cpf):
         # sourcery skip: merge-duplicate-blocks, remove-redundant-if, use-next

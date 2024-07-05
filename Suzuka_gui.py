@@ -6,8 +6,9 @@ from ProductController import ProductController
 from CustomerController import CustomerController
 from SaleController import SaleController
 
-class ERPSuzuka:
+class SuzukaMain:
     def __init__(self, root):
+        pass
         self.root = root
         self.root.title('Suzuka Auto Peças')
         
@@ -24,7 +25,6 @@ class ERPSuzuka:
         for widget in self.main_frame.winfo_children():
             widget.destroy()
     
-        # Definir os textos e comandos para os botões
         buttons = [
             ('Produto', self.productMenu),
             ('Cliente', self.customerMenu),
@@ -32,24 +32,23 @@ class ERPSuzuka:
             ('Estoque', self.stockMenu),
         ]
     
-        # Criar e posicionar os botões usando um loop
         for i, (text, command) in enumerate(buttons):
             btn = tk.Button(self.main_frame, text=text, command=command)
             btn.grid(row=0, column=i, padx=10, pady=10)
     
-        # Botão de sair ocupando todas as colunas disponíveis
         btn_exit = tk.Button(self.main_frame, text='Sair', command=self.root.quit)
         btn_exit.grid(row=1, column=0, columnspan=len(buttons), pady=5)
+
     def productMenu(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
         
         buttons = [
             ('Adicionar Produto', self.collect_product_data),
-            ('Listar Produtos', self.productController.list_products),
-            ('Buscar Produto', self.productController.search_products_by),
-            ('Deletar Produto', self.productController.delete_products_by),
-            ('Atualizar Produto', self.productController.update_product),
+            ('Listar Produtos', self.list_products),
+            ('Buscar Produto', self.search_products),
+            ('Deletar Produto', self.delete_product),
+            ('Atualizar Produto', self.update_product),
         ]
         
         for i, (text, command) in enumerate(buttons):
@@ -89,14 +88,13 @@ class ERPSuzuka:
             ("id_entry", "id"),
             ("name_entry", "name"),
             ("price_entry", "price"),
-            ("part_number_entry", "part_number"),
+            ("part_number_entry", "partNumber"),
             ("stock_entry", "stock"),
             ("category_entry", "category"),
-            ("factory_price_entry", "factory_price"),
+            ("factory_price_entry", "factoryPrice"),
             ("manufacturer_entry", "manufacturer"),
             ("description_entry", "description")
         ]
-    
     
         produto = {}
         for entry_attr, key in campos:
@@ -106,14 +104,13 @@ class ERPSuzuka:
                 value = None
             produto[key] = value
     
-    
-        with open('produto.json', 'w') as json_file:
-            json.dump(produto, json_file, indent=4)
-    
-        print("Objeto salvo com sucesso em produto.json")
-
-            
+        self.productController.add_product(**produto)
+        messagebox.showinfo("Sucesso", "Produto adicionado com sucesso!")
+        self.product_window.destroy()
+        
     def list_products(self):
+        self.clear_main_frame()
+        
         products = self.productController.list_products()
         
         if not products:
@@ -123,21 +120,129 @@ class ERPSuzuka:
             return
         
         for product in products:
-            tk.Label(self.main_frame, text=product).pack(pady=5)
+            product_info = f"ID: {product['id']}, Nome: {product['name']}, Preço: {product['price']}"
+            tk.Label(self.main_frame, text=product_info).pack(pady=5)
         
         btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
         btn_back.pack(pady=10)
         
+    def search_products(self):
+        self.clear_main_frame()
+        self.product_window.title("Buscar Produto")
+        
+        campos = [
+            ("ID do Produto:", "id_entry"),
+            ("Nome do Produto:", "name_entry"),
+            ("Número da Peça:", "part_number_entry"),
+            ("Categoria do Produto:", "category_entry"),
+            ("Fabricante:", "manufacturer_entry"),
+            ("Descrição:", "description_entry")
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.product_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.product_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)
+            
+        btn_search = tk.Button(self.product_window, text="Buscar", command=lambda: self.display_search_results())
+        btn_search.grid(row=len(campos), column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(self.product_window, text="Voltar", command=self.create_main_menu)
+        btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
+        
+        
+    def display_search_results(self, id, name, part_number, category, manufacturer, description):
+        results = self.productController.search_products_by(id, name, part_number, category, manufacturer, description)
+        
+        if not results:
+            messagebox.showinfo("Nenhum Produto Encontrado", "Nenhum produto encontrado com os critérios fornecidos.")
+        else:
+            self.clear_main_frame()
+            for product in results:
+                product_info = f"ID: {product['id']}, Nome: {product['name']}, Preço: {product['price']}"
+                tk.Label(self.main_frame, text=product_info).pack(pady=5)
+        
+            btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+            btn_back.pack(pady=10)
+            
+    def delete_product(self):
+        self.delete_window = tk.Toplevel(self.root)
+        self.delete_window.title("Deletar Produto")
+        
+        campos = [
+            ("ID do Produto:", "id_entry"),
+            ("Nome do Produto:", "name_entry"),
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.delete_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.delete_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)
+            
+        btn_delete = tk.Button(self.delete_window, text="Deletar", command=self.delete_product)
+        btn_delete.grid(row=len(campos), column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(self.delete_window, text="Voltar", command=self.delete_window.destroy)
+        btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
+        
+        
+    def delete_product_by_id(self, id, name):
+        deleted = self.productController.delete_product_by(id, name)
+        if deleted:
+            messagebox.showinfo("Sucesso", "Produto deletado com sucesso.")
+        else:
+            messagebox.showinfo("Erro", "Não foi possível deletar o produto.")
+    
+    def update_product(self):
+        self.update_window = tk.Toplevel(self.root)
+        self.update_window.title("Atualizar Produto")
+        
+        campos = [
+            ("ID do Produto:", "id_entry"),
+            ("Novo Nome do Produto:", "new_name_entry"),
+            ("Novo Preço do Produto:", "new_price_entry"),
+            ("Novo Número da Peça:", "new_part_number_entry"),
+            ("Novo Estoque do Produto:", "new_stock_entry"),
+            ("Nova Categoria do Produto:", "new_category_entry"),
+            ("Novo Preço de Fábrica:", "new_factory_price_entry"),
+            ("Novo Fabricante:", "new_manufacturer_entry"),
+            ("Nova Descrição:", "new_description_entry")
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.update_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.update_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)
+            
+        btn_update = tk.Button(self.update_window, text="Atualizar", command=self.update_product_by_id)
+        btn_update.grid(row=len(campos), column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(self.update_window, text="Voltar", command=self.update_window.destroy)
+        btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
+        
+    def update_product_by_id(self, id, new_name, new_price, new_part_number, new_stock, new_category,
+                                                new_factory_price, new_manufacturer, new_description):
+        updated = self.productController.update_product(id, new_name, new_price, new_part_number, new_stock,
+                                                        new_category, new_factory_price, new_manufacturer,
+                                                        new_description)
+        if updated:
+            messagebox.showinfo("Sucesso", "Produto atualizado com sucesso.")
+        else:
+            messagebox.showinfo("Erro", "Não foi possível atualizar o produto.")
+            
     def customerMenu(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
         buttons = [
             ('Adicionar Cliente', self.collect_customer_data),
-            ('Listar Clientes', self.customerController.get_all_customers),
-            ('Buscar Cliente', self.customerController.find_customer_by),
-            ('Deletar Cliente', self.customerController.delete_customer_by),
-            ('Atualizar Cliente', self.customerController.update_customer),
+            ('Listar Clientes', self.list_customers),
+            ('Buscar Cliente', self.search_customers),
+            ('Deletar Cliente', self.delete_customer),
+            ('Atualizar Cliente', self.update_customer),
         ]
 
         for i, (text, command) in enumerate(buttons):
@@ -163,11 +268,11 @@ class ERPSuzuka:
             tk.Label(self.customers_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
             entry = tk.Entry(self.customers_window)
             entry.grid(row=i, column=1, padx=10, pady=5)
-            setattr(self, entry_attr, entry)
-            
+            setattr(self, entry_attr, entry)  # Define o atributo dinamicamente
+        
         btn_save = tk.Button(self.customers_window, text="Salvar", command=self.save_customer)
         btn_save.grid(row=len(campos), column=0, columnspan=2, pady=10)
-
+        
     def save_customer(self):
         campos = [
             ("id_entry", "id"),
@@ -177,111 +282,282 @@ class ERPSuzuka:
             ("cpf_entry", "cpf")
         ]
         
-        customer = {}
+        cliente = {}
         for entry_attr, key in campos:
             value = getattr(self, entry_attr).get()
             if not value:
                 # Handle empty value
                 value = None
-            customer[key] = value
-            
-        with open('customer.json', 'w') as json_file:
-            json.dump(customer, json_file, indent=4)
-            
-        print("Objeto salvo com sucesso em customer.json")
-
-    #def saleMenu(self):
+            cliente[key] = value
         
-    
-    def clear_main_frame(self):
-        for widget in self.main_frame.winfo_children():
-            widget.destroy()
+        self.customerController.add_customer(**cliente)
+        messagebox.showinfo("Sucesso", "Cliente adicionado com sucesso!")
+        self.customers_window.destroy()
         
-    def stockMenu(self):
-        for widget in self.main_frame.winfo_children():
-            widget.destroy()
+    def list_customers(self):
+        self.clear_main_frame()
         
-        products = self.productController.list()
+        customers = self.customerController.get_all_customers()
         
-        if not products:
-            tk.Label(self.main_frame, text="Nenhum produto cadastrado.").pack(pady=20)
+        if not customers:
+            tk.Label(self.main_frame, text="Nenhum cliente cadastrado.").pack(pady=20)
             btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
             btn_back.pack(pady=10)
             return
         
-        tk.Label(self.main_frame, text="Selecione o Produto para Atualizar o Estoque").pack(pady=10)
-        
-        self.selected_product = tk.StringVar(self.main_frame)
-        self.selected_product.set(products[0]['name'])  # Valor padrão
-        
-        product_options = [product['name'] for product in products]
-        option_menu = tk.OptionMenu(self.main_frame, self.selected_product, *product_options)
-        option_menu.pack(pady=10)
-        
-        tk.Label(self.main_frame, text="Quantidade a Adicionar/Remover:").pack(pady=5)
-        self.quantity_entry = tk.Entry(self.main_frame)
-        self.quantity_entry.pack(pady=5)
-        
-        btn_update = tk.Button(self.main_frame, text="Atualizar Estoque", command=self.performStockUpdate)
-        btn_update.pack(pady=10)
+        for customer in customers:
+            customer_info = f"ID: {customer['id']}, Nome: {customer['name']}, CPF: {customer['cpf']}"
+            tk.Label(self.main_frame, text=customer_info).pack(pady=5)
         
         btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
         btn_back.pack(pady=10)
-            
-    def performStockUpdate(self):
-        selected_product_name = self.selected_product.get()
-        quantity_str = self.quantity_entry.get()
-    
-        try:
-            quantity = int(quantity_str)
-    
-            # Encontrar o produto selecionado pelo nome
-            selected_product = None
-            for product in self.productController.get_all_products():
-                if product['name'] == selected_product_name:
-                    selected_product = product
-                    break
-    
-            if not selected_product:
-                messagebox.showerror("Produto não encontrado", f"Produto '{selected_product_name}' não encontrado.")
-                return
-    
-            # Atualizar o estoque do produto
-            new_stock = selected_product['stock'] + quantity
-            selected_product['stock'] = new_stock
-    
-            # Exibir mensagem de sucesso
-            messagebox.showinfo("Estoque Atualizado", f"Estoque de '{selected_product_name}' atualizado para {new_stock}")
-    
-            # Voltar ao menu principal
-            self.create_main_menu()
-    
-        except ValueError:
-            messagebox.showerror("Erro de entrada", "A quantidade deve ser um número inteiro.")
-        new_stock = selected_product.stock + quantity
-        selected_product.stock = new_stock
-    
-        # Exibir mensagem de sucesso
-        messagebox.showinfo("Estoque Atualizado", f"Estoque de '{selected_product_name}' atualizado para {new_stock}")
-    
-        # Voltar ao menu principal
-        self.create_main_menu()
-
-    def saleMenu(self):
-        id = "001"
-        customer = "John Doe"  # Replace "John Doe" with the actual customer name
-        product = "Product Name"  # Replace "Product Name" with the actual product name
-        quantity = 1
-        date = "01/01/2021"
-        self.saleController.add(id, customer, product, quantity, date)
         
-        messagebox.showinfo("Venda Adicionada", f"Venda '{id}' cadastrada com sucesso")
+    def search_customers(self):
+        self.search_window = tk.Toplevel(self.root)
+        self.search_window.title("Buscar Cliente")
+        
+        campos = [
+            ("ID do Cliente:", "id_entry"),
+            ("Nome do Cliente:", "name_entry"),
+            ("CPF do Cliente:", "cpf_entry")
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.search_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.search_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)
+            
+        btn_search = tk.Button(self.search_window, text="Buscar", command=lambda: self.display_search_results_customer(
+            self.id_entry.get(), self.name_entry.get(), self.cpf_entry.get()))
+        btn_search.grid(row=len(campos), column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(self.search_window, text="Voltar", command=self.search_window.destroy)
+        btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
+        
+    def display_search_results_customer(self, id, name, cpf):
+        results = self.customerController.find_customer_by(name=name, id=id, cpf=cpf)
+        
+        if not results:
+            messagebox.showinfo("Nenhum Cliente Encontrado", "Nenhum cliente encontrado com os critérios fornecidos.")
+        else:
+            self.clear_main_frame()
+            for customer in results:
+                customer_info = f"ID: {customer['id']}, Nome: {customer['name']}, CPF: {customer['cpf']}"
+                tk.Label(self.main_frame, text=customer_info).pack(pady=5)
+        
+            btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+            btn_back.pack(pady=10)
+        
+    def delete_customer(self):
+        self.delete_window = tk.Toplevel(self.root)
+        self.delete_window.title("Deletar Cliente")
+        
+        campos = [
+            ("ID do Cliente:", "id_entry"),
+            ("Nome do Cliente:", "name_entry"),
+            ("CPF do Cliente:", "cpf_entry")
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.delete_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.delete_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)
+            
+        btn_delete = tk.Button(self.delete_window, text="Deletar", command=lambda: self.delete_customer_by_id(
+            self.id_entry.get(), self.name_entry.get(), self.cpf_entry.get()))
+        btn_delete.grid(row=len(campos), column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(self.delete_window, text="Voltar", command=self.delete_window.destroy)
+        btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
+        
+    def delete_customer_by_id(self, id, name, cpf):
+        deleted = self.customerController.delete_customer_by(id, name, cpf)
+        if deleted:
+            messagebox.showinfo("Sucesso", "Cliente deletado com sucesso.")
+        else:
+            messagebox.showinfo("Erro", "Não foi possível deletar o cliente.")
     
+        self.create_main_menu()
+    
+    def update_customer(self):
+        self.update_window = tk.Toplevel(self.root)
+        self.update_window.title("Atualizar Cliente")
+        
+        campos = [
+            ("ID do Cliente:", "id_entry"),
+            ("Novo Nome do Cliente:", "new_name_entry"),
+            ("Novo Telefone do Cliente:", "new_phone_entry"),
+            ("Novo Email do Cliente:", "new_email_entry"),
+            ("Novo CPF do Cliente:", "new_cpf_entry")
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.update_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.update_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)
+            
+        btn_update = tk.Button(self.update_window, text="Atualizar", command=lambda: self.update_customer_by_id(
+            self.id_entry.get(), self.new_name_entry.get(), self.new_phone_entry.get(), self.new_email_entry.get(),
+            self.new_cpf_entry.get()))
+        btn_update.grid(row=len(campos), column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(self.update_window, text="Voltar", command=self.update_window.destroy)
+        btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
+        
+    def update_customer_by_id(self, id, new_name, new_phone, new_email, new_cpf):
+        updated = self.customerController.update_customer(id, new_name, new_phone, new_email, new_cpf)
+        if updated:
+            messagebox.showinfo("Sucesso", "Cliente atualizado com sucesso.")
+        else:
+            messagebox.showinfo("Erro", "Não foi possível atualizar o cliente.")
+            
+    def saleMenu(self):
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
 
-def main():
-    root = tk.Tk()
-    ERPSuzuka(root)
-    root.mainloop()
+        buttons = [
+            ('Adicionar Venda', self.collect_sale_data),
+            ('Listar Vendas', self.list_sales),
+            ('Buscar Venda', self.search_sales),
+            ('Deletar Venda', self.delete_sale),
+        ]
 
-if __name__ == "__main__":
-    main()
+        for i, (text, command) in enumerate(buttons):
+            btn = tk.Button(self.main_frame, text=text, command=command)
+            btn.grid(row=0, column=i, padx=10, pady=5)
+
+        btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+        btn_back.grid(row=1, column=0, columnspan=len(buttons), pady=10)
+        
+    def collect_sale_data(self):
+        self.sales_window = tk.Toplevel(self.root)
+        self.sales_window.title("Adicionar Venda")
+        
+        campos = [
+            ("ID da Venda:", "id_entry"),
+            ("ID do Cliente:", "customer_id_entry"),
+            ("Data da Venda (DD/MM/AAAA):", "date_entry"),
+            ("ID dos Produtos (separados por vírgula):", "products_entry"),
+            ("Quantidades dos Produtos (separados por vírgula):", "quantities_entry"),
+        ]
+        
+        for i, (label_text, entry_attr) in enumerate(campos):
+            tk.Label(self.sales_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.sales_window)
+            entry.grid(row=i, column=1, padx=10, pady=5)
+            setattr(self, entry_attr, entry)  # Define o atributo dinamicamente
+        
+        btn_save = tk.Button(self.sales_window, text="Salvar", command=self.save_sale)
+        btn_save.grid(row=len(campos), column=0, columnspan=2, pady=10)
+        
+    def save_sale(self):
+        campos = [
+            ("id_entry", "id"),
+            ("customer_id_entry", "customerId"),
+            ("date_entry", "date"),
+            ("products_entry", "products"),
+            ("quantities_entry", "quantities")
+        ]
+        
+        venda = {}
+        for entry_attr, key in campos:
+            value = getattr(self, entry_attr).get()
+            if not value:
+                # Handle empty value
+                value = None
+            venda[key] = value
+        
+        self.saleController.add_sale(**venda)
+        messagebox.showinfo("Sucesso", "Venda registrada com sucesso!")
+        self.sales_window.destroy()
+        
+    def list_sales(self):
+        self.clear_main_frame()
+        
+        sales = self.saleController.list_sales()
+        
+        if not sales:
+            tk.Label(self.main_frame, text="Nenhuma venda cadastrada.").pack(pady=20)
+            btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+            btn_back.pack(pady=10)
+            return
+        
+        for sale in sales:
+            sale_info = f"ID: {sale['id']}, Cliente: {sale['customerId']}, Data: {sale['date']}"
+            tk.Label(self.main_frame, text=sale_info).pack(pady=5)
+        
+        btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+        btn_back.pack(pady=10)
+        
+    def search_sales(self):
+        self.clear_main_frame()
+        
+        search_window = tk.Toplevel(self.root)
+        search_window.title("Buscar Venda")
+        
+        tk.Label(search_window, text="ID da Venda:").grid(row=0, column=0, padx=10, pady=5)
+        id_entry = tk.Entry(search_window)
+        id_entry.grid(row=0, column=1, padx=10, pady=5)
+        
+        tk.Label(search_window, text="ID do Cliente:").grid(row=1, column=0, padx=10, pady=5)
+        customer_id_entry = tk.Entry(search_window)
+        customer_id_entry.grid(row=1, column=1, padx=10, pady=5)
+        
+        tk.Label(search_window, text="Data da Venda (DD/MM/AAAA):").grid(row=2, column=0, padx=10, pady=5)
+        date_entry = tk.Entry(search_window)
+        date_entry.grid(row=2, column=1, padx=10, pady=5)
+        
+        btn_search = tk.Button(search_window, text="Buscar", command=lambda: self.display_search_results_sale(
+            id_entry.get(), customer_id_entry.get(), date_entry.get()))
+        btn_search.grid(row=3, column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(search_window, text="Voltar", command=search_window.destroy)
+        btn_back.grid(row=4, column=0, columnspan=2, pady=10)
+        
+    def display_search_results_sale(self, id, customer_id, date):
+        results = self.saleController.search_sales_by(id, customer_id, date)
+        
+        if not results:
+            messagebox.showinfo("Nenhuma Venda Encontrada", "Nenhuma venda encontrada com os critérios fornecidos.")
+        else:
+            self.clear_main_frame()
+            for sale in results:
+                sale_info = f"ID: {sale['id']}, Cliente: {sale['customerId']}, Data: {sale['date']}"
+                tk.Label(self.main_frame, text=sale_info).pack(pady=5)
+        
+            btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+            btn_back.pack(pady=10)
+        
+    def delete_sale(self):
+        delete_window = tk.Toplevel(self.root)
+        delete_window.title("Deletar Venda")
+        
+        tk.Label(delete_window, text="ID da Venda:").grid(row=0, column=0, padx=10, pady=5)
+        id_entry = tk.Entry(delete_window)
+        id_entry.grid(row=0, column=1, padx=10, pady=5)
+        
+        btn_delete = tk.Button(delete_window, text="Deletar", command=lambda: self.delete_sale_by_id(id_entry.get()))
+        btn_delete.grid(row=1, column=0, columnspan=2, pady=10)
+        
+        btn_back = tk.Button(delete_window, text="Voltar", command=delete_window.destroy)
+        btn_back.grid(row=2, column=0, columnspan=2, pady=10)
+        
+    def delete_sale_by_id(self, id):
+        deleted = self.saleController.delete_sale_by_id(id)
+        if deleted:
+            messagebox.showinfo("Sucesso", "Venda deletada com sucesso.")
+        else:
+            messagebox.showinfo("Erro", "Não foi possível deletar a venda.")
+    
+        self.create_main_menu()
+    
+    def main():
+        root = tk.Tk()
+        SuzukaMain(root)
+        root.mainloop()
+    
+    if __name__ == "__main__":
+        main()

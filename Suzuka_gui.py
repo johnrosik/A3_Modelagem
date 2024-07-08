@@ -153,7 +153,9 @@ class SuzukaMain:
             entry.grid(row=i, column=1, padx=10, pady=5)
             setattr(self, entry_attr, entry)
             
-        btn_search = tk.Button(self.product_window, text="Buscar", command=lambda: self.display_search_results())
+        btn_search = tk.Button(self.product_window, text="Buscar", command=lambda: self.display_search_results(
+        self.id_entry.get(), self.name_entry.get(), self.part_number_entry.get(), self.category_entry.get(),
+        self.manufacturer_entry.get(), self.description_entry.get()))
         btn_search.grid(row=len(campos), column=0, columnspan=2, pady=10)
         
         btn_back = tk.Button(self.product_window, text="Voltar", command=self.create_main_menu)

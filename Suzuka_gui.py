@@ -1,15 +1,12 @@
 import json
 import tkinter as tk
-from tkinter import ttk
 from tkinter import messagebox
 
 from ProductController import ProductController
 from CustomerController import CustomerController
 from SaleController import SaleController
 
-import sv_ttk
 class SuzukaMain:
-    
     
     def __init__(self, root):
         self.root = root
@@ -18,12 +15,13 @@ class SuzukaMain:
         self.customerController = CustomerController()
         self.saleController = SaleController()
         
-        self.main_frame = ttk.Frame(self.root)
-        self.main_frame.pack(padx=20, pady=20)
+        self.main_frame = tk.Frame(self.root)
+        self.main_frame.pack(pady=20)
         
         self.create_main_menu()
+        
     def create_main_menu(self):
-        for widget in self.main_frame.winfo_children():
+        for widget in self.root.winfo_children():
             widget.destroy()
     
         buttons = [
@@ -33,10 +31,10 @@ class SuzukaMain:
         ]
     
         for i, (text, command) in enumerate(buttons):
-            btn = ttk.Button(self.main_frame, text=text, command=command)
+            btn = tk.Button(self.main_frame, text=text, command=command)
             btn.pack(pady=10)
     
-        btn_exit = ttk.Button(self.main_frame, text='Sair', command=self.root.quit)
+        btn_exit = tk.Button(self.main_frame, text='Sair', command=self.root.quit)
         btn_exit.grid(row=1, column=0, columnspan=len(buttons), pady=5)
         
     def clear_main_frame(self):
@@ -56,10 +54,10 @@ class SuzukaMain:
         ]
         
         for i, (text, command) in enumerate(buttons):
-            btn = ttk.Button(self.main_frame, text=text, command=command)
+            btn = tk.Button(self.main_frame, text=text, command=command)
             btn.grid(row=0, column=i, padx=10, pady=5)
             
-        btn_back = ttk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+        btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
         btn_back.grid(row=1, column=0, columnspan=len(buttons), pady=10)
         
     def collect_product_data(self):
@@ -79,12 +77,12 @@ class SuzukaMain:
         ]
     
         for i, (label_text, entry_attr) in enumerate(campos):
-            ttk.Label(self.product_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
-            entry = ttk.Entry(self.product_window)
+            tk.Label(self.product_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.product_window)
             entry.grid(row=i, column=1, padx=10, pady=5)
             setattr(self, entry_attr, entry)  # Define o atributo dinamicamente
-    
-        btn_save = ttk.Button(self.product_window, text="Salvar", command=self.save_product)
+
+        btn_save = tk.Button(self.product_window, text="Salvar", command=self.save_product)
         btn_save.grid(row=len(campos), column=0, columnspan=2, pady=10)
         
     def save_product(self):
@@ -118,22 +116,22 @@ class SuzukaMain:
         products = self.productController.list_products()
         
         if not products:
-            ttk.Label(self.main_frame, text="Nenhum produto cadastrado.").pack(pady=20)
+            tk.Label(self.main_frame, text="Nenhum produto cadastrado.").pack(pady=20)
             btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
             btn_back.pack(pady=10)
             return
         
         for product in products:
             product_info = f"ID: {product['id']}, Nome: {product['name']}, Preço: {product['price']}"
-            ttk.Label(self.main_frame, text=product_info).pack(pady=5)
+            tk.Label(self.main_frame, text=product_info).pack(pady=5)
             
-            btn_update_product = ttk.Button(self.main_frame, text="Atualizar Produto", command=self.update_product)
+            btn_update_product = tk.Button(self.main_frame, text="Atualizar Produto", command=self.update_product)
             btn_update_product.pack(pady=10)
             
-            btn_delete_product = ttk.Button(self.main_frame, text="Deletar Produto", command=self.delete_product)
+            btn_delete_product = tk.Button(self.main_frame, text="Deletar Produto", command=self.delete_product)
             btn_delete_product.pack(pady=10)
         
-        btn_back = ttk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+        btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
         btn_back.pack(pady=10)
         
     def search_products(self):
@@ -150,15 +148,15 @@ class SuzukaMain:
         ]
         
         for i, (label_text, entry_attr) in enumerate(campos):
-            ttk.Label(self.product_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
-            entry = ttk.Entry(self.product_window)
+            tk.Label(self.product_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            entry = tk.Entry(self.product_window)
             entry.grid(row=i, column=1, padx=10, pady=5)
             setattr(self, entry_attr, entry)
             
-        btn_search = ttk.Button(self.product_window, text="Buscar", command=lambda: self.display_search_results())
+        btn_search = tk.Button(self.product_window, text="Buscar", command=lambda: self.display_search_results())
         btn_search.grid(row=len(campos), column=0, columnspan=2, pady=10)
         
-        btn_back = ttk.Button(self.product_window, text="Voltar", command=self.create_main_menu)
+        btn_back = tk.Button(self.product_window, text="Voltar", command=self.create_main_menu)
         btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
         
         
@@ -170,9 +168,9 @@ class SuzukaMain:
             self.clear_main_frame()
             for product in results:
                 product_info = f"ID: {product['id']}, Nome: {product['name']}, Preço: {product['price']}"
-                ttk.Label(self.main_frame, text=product_info).pack(pady=5)
+                tk.Label(self.main_frame, text=product_info).pack(pady=5)
     
-        btn_back = ttk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
+        btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
         btn_back.pack(pady=10)
             
     def delete_product(self):
@@ -575,5 +573,4 @@ def main():
     root.mainloop()
 
 if __name__ == "__main__":
-    sv_ttk.set_theme("dark")
     main()

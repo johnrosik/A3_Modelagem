@@ -1,4 +1,3 @@
-import json
 import tkinter as tk
 from tkinter import messagebox
 
@@ -10,41 +9,40 @@ class SuzukaMain:
     
     def __init__(self, root):
         self.root = root
-        self.root.title('Suzuka Auto Peças')
-        self.productController = ProductController()
-        self.customerController = CustomerController()
-        self.saleController = SaleController()
+        self.root.title("Suzuka")
         
         self.main_frame = tk.Frame(self.root)
         self.main_frame.pack(pady=20)
         
+        self.productController = ProductController()
+        self.customerController = CustomerController()
+        self.saleController = SaleController()
+        
         self.create_main_menu()
         
     def create_main_menu(self):
-        for widget in self.root.winfo_children():
-            widget.destroy()
-    
+        self.clear_main_frame()
+        
         buttons = [
             ('Produto', self.productMenu),
             ('Cliente', self.customerMenu),
             ('Venda', self.saleMenu),
         ]
-    
+        
         for i, (text, command) in enumerate(buttons):
             btn = tk.Button(self.main_frame, text=text, command=command)
-            btn.pack(pady=10)
-    
-        btn_exit = tk.Button(self.main_frame, text='Sair', command=self.root.quit)
-        btn_exit.grid(row=1, column=0, columnspan=len(buttons), pady=5)
+            btn.grid(row=0, column=i, padx=10, pady=5)
+        
+        btn_exit = tk.Button(self.main_frame, text="Sair", command=self.root.quit)
+        btn_exit.grid(row=1, column=0, columnspan=len(buttons), pady=10)
         
     def clear_main_frame(self):
-        for widget in self.main_frame.winfo_children():
-            widget.destroy()
+        [widget.destroy() for widget in self.main_frame.winfo_children()]
 
     def productMenu(self):
         for widget in self.main_frame.winfo_children():
             widget.destroy()
-        
+
         buttons = [
             ('Adicionar Produto', self.collect_product_data),
             ('Listar Produtos', self.list_products),
@@ -52,18 +50,18 @@ class SuzukaMain:
             ('Deletar Produto', self.delete_product),
             ('Atualizar Produto', self.update_product),
         ]
-        
+
         for i, (text, command) in enumerate(buttons):
             btn = tk.Button(self.main_frame, text=text, command=command)
             btn.grid(row=0, column=i, padx=10, pady=5)
-            
+
         btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
         btn_back.grid(row=1, column=0, columnspan=len(buttons), pady=10)
         
     def collect_product_data(self):
         self.product_window = tk.Toplevel(self.root)
         self.product_window.title("Adicionar Produto")
-    
+
         campos = [
             ("ID do Produto:", "id_entry"),
             ("Nome do Produto:", "name_entry"),
@@ -75,9 +73,10 @@ class SuzukaMain:
             ("Fabricante:", "manufacturer_entry"),
             ("Descrição:", "description_entry")
         ]
-    
+
         for i, (label_text, entry_attr) in enumerate(campos):
-            tk.Label(self.product_window, text=label_text).grid(row=i, column=0, padx=10, pady=5)
+            label = tk.Label(self.product_window, text=label_text)
+            label.grid(row=i, column=0, padx=10, pady=5)
             entry = tk.Entry(self.product_window)
             entry.grid(row=i, column=1, padx=10, pady=5)
             setattr(self, entry_attr, entry)  # Define o atributo dinamicamente
@@ -100,14 +99,11 @@ class SuzukaMain:
     
         produto = {}
         for entry_attr, key in campos:
-            value = getattr(self, entry_attr).get()
-            if not value:
-                # Handle empty value
-                value = None
+            value = getattr(self, entry_attr).get() or None
             produto[key] = value
     
         self.productController.add_product(**produto)
-        messagebox.showinfo("Sucesso", "Produto adicionado com sucesso!")
+        messagebox.showinfo("Success", "Product added successfully!")
         self.product_window.destroy()
         
     def list_products(self):
@@ -154,13 +150,12 @@ class SuzukaMain:
             setattr(self, entry_attr, entry)
             
         btn_search = tk.Button(self.product_window, text="Buscar", command=lambda: self.display_search_results(
-        self.id_entry.get(), self.name_entry.get(), self.part_number_entry.get(), self.category_entry.get(),
-        self.manufacturer_entry.get(), self.description_entry.get()))
+            self.id_entry.get(), self.name_entry.get(), self.part_number_entry.get(), self.category_entry.get(),
+            self.manufacturer_entry.get(), self.description_entry.get()))
         btn_search.grid(row=len(campos), column=0, columnspan=2, pady=10)
         
         btn_back = tk.Button(self.product_window, text="Voltar", command=self.create_main_menu)
         btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
-        
         
     def display_search_results(self, id, name, part_number, category, manufacturer, description):
         results = self.productController.search_products_by(id, name, part_number, category, manufacturer, description) 
@@ -171,7 +166,7 @@ class SuzukaMain:
             for product in results:
                 product_info = f"ID: {product['id']}, Nome: {product['name']}, Preço: {product['price']}"
                 tk.Label(self.main_frame, text=product_info).pack(pady=5)
-    
+
         btn_back = tk.Button(self.main_frame, text="Voltar", command=self.create_main_menu)
         btn_back.pack(pady=10)
             
@@ -190,15 +185,29 @@ class SuzukaMain:
             entry.grid(row=i, column=1, padx=10, pady=5)
             setattr(self, entry_attr, entry)
             
-        btn_delete = tk.Button(self.delete_window, text="Deletar", command=self.delete_product)
+        btn_delete = tk.Button(self.delete_window, text="Deletar", command=self.delete_product_by_id)
         btn_delete.grid(row=len(campos), column=0, columnspan=2, pady=10)
         
         btn_back = tk.Button(self.delete_window, text="Voltar", command=self.delete_window.destroy)
         btn_back.grid(row=len(campos) + 1, column=0, columnspan=2, pady=10)
         
+    def delete_product_by_id(self):
+        id = self.id_entry.get()
+        name = self.name_entry.get()
+        
+        if (deleted := self.productController.delete_product_by(id, name)):
+            messagebox.showinfo("Success", "Product deleted successfully!")
+        else:
+            messagebox.showerror("Error", "Failed to delete product.")
+        
+        self.delete_window.destroy()
+        
         
     def delete_product_by_id(self, id, name):
-        deleted = self.productController.delete_product_by(id, name)
+        if (deleted := self.productController.delete_product_by(id, name)):
+            messagebox.showinfo("Sucesso", "Produto deletado com sucesso.")
+        else:
+            messagebox.showinfo("Erro", "Não foi possível deletar o produto.")
         if deleted:
             messagebox.showinfo("Sucesso", "Produto deletado com sucesso.")
         else:

@@ -1,4 +1,3 @@
-from Sale import Sale
 import json
 
 

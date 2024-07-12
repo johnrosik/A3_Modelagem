@@ -1,5 +1,4 @@
 import json
-from Customer import Customer
 
 class CustomerController:
     def __init__(self, file_path='clientes.json'):

@@ -1,5 +1,4 @@
 import json
-from Product import Product
 
 class ProductController:
     def __init__(self, file_path='produtos.json'):

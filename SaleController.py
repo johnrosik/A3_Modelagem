@@ -42,12 +42,15 @@ class SaleController:
                         (product_id is None or sale['product_id'] == product_id) and
                         (date is None or sale['date'] == date)]
         
-    def delete_sales_by(self, id):
-        if sale := self.search_sales_by(id=id):
-            self.sales.remove(sale[0])
+    def cancel_sale_by(self, id):
+        sale = self.search_sales_by(id=id)
+        if sale:
+            sale[0]['status'] = 'cancelado'
             self.save_sales()
             return True
         return False
+    
+    
     
     def update_sale(self, id, customer_id=None, product_id=None, quantity=None, total=None, discount=None, date=None):
         sale = self.search_sales_by(id=id)
